@@ -95,21 +95,47 @@ export async function POST(req: Request) {
       );
     }
 
-    if (lower.startsWith("delete ")) {
-      const n = parseInt(lower.slice(7).trim(), 10);
-      if (!Number.isFinite(n)) return reply("Usage: delete 2");
+if (lower.startsWith("delete ") || lower.startsWith("remove ")) {
+  const value = lower
+    .replace(/^delete\s+/, "")
+    .replace(/^remove\s+/, "")
+    .trim();
 
-      const items = await getOrderedItems();
-      const target = items[n - 1];
-      if (!target) return reply(`No item #${n}. Text 'list'.`);
+  // First try numeric delete (index)
+  const n = parseInt(value, 10);
 
-      const { error } = await supabase
-        .from("grocery_items")
-        .delete()
-        .eq("id", target.id);
+  const items = await getOrderedItems();
 
-      return reply(error ? "Error deleting item." : `Deleted: ${target.text}`);
-    }
+  // If numeric → delete by index
+  if (Number.isFinite(n)) {
+    const target = items[n - 1];
+    if (!target) return reply(`No item #${n}. Text 'list'.`);
+
+    const { error } = await supabase
+      .from("grocery_items")
+      .delete()
+      .eq("id", target.id);
+
+    return reply(error ? "Error deleting item." : `Deleted: ${target.text}`);
+  }
+
+  // Otherwise → delete by name (first match, case-insensitive)
+  const target = items.find(
+    (item) => item.text.toLowerCase() === value
+  );
+
+  if (!target) {
+    return reply(`No item named "${value}". Text 'list'.`);
+  }
+
+  const { error } = await supabase
+    .from("grocery_items")
+    .delete()
+    .eq("id", target.id);
+
+  return reply(error ? "Error deleting item." : `Deleted: ${target.text}`);
+}
+
 
     // Add items (default)
     const parts = body
