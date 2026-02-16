@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import twilio from "twilio";
 
+const from = params.get("From") ?? "";
+
+const allowed = new Set([
+  "whatsapp:+18148606181",
+]);
+
+if (!allowed.has(from)) {
+  return reply("Not authorized.");
+}
+
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
