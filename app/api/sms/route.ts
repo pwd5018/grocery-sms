@@ -31,6 +31,7 @@ export async function POST(req: Request) {
   const params = new URLSearchParams(rawBody);
 
   const from = params.get("From") ?? "";
+  console.log("FROM:", from);
   const allowed = new Set([
     "whatsapp:+18148606181",
   ]);
