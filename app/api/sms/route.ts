@@ -27,6 +27,10 @@ async function getOrderedItems() {
   return data ?? [];
 }
 
+function normalizeItem(s: string) {
+  return s.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
 export async function POST(req: Request) {
   const rawBody = await req.text();
   const params = new URLSearchParams(rawBody);
@@ -157,19 +161,60 @@ if (lower.startsWith("delete ") || lower.startsWith("remove ")) {
   );
 }
 
-    // Add items (default)
-    const parts = body
-      .split(/[\n,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
+// Add items (default)
+const parts = body
+  .split(/[\n,]+/)
+  .map((s) => s.trim())
+  .filter(Boolean);
 
-    if (!parts.length) return reply("Nothing to add. Text 'help'.");
+if (!parts.length) return reply("Nothing to add. Text 'help'.");
 
-    const rows = parts.map((text) => ({ text, done: false, added_by: from }));
-    const { error } = await supabase.from("grocery_items").insert(rows);
+const items = await getOrderedItems();
 
-    return reply(error ? "Error adding items." : `Added: ${parts.join(", ")}`);
-  } catch {
-    return reply("Unexpected error.");
+// Build a set of existing normalized names
+const existing = new Set(items.map((i) => normalizeItem(i.text)));
+
+// Split incoming into toAdd vs dupes
+const toAdd: string[] = [];
+const dupes: string[] = [];
+
+for (const p of parts) {
+  const key = normalizeItem(p);
+  if (!key) continue;
+
+  if (existing.has(key)) {
+    dupes.push(p);
+  } else {
+    existing.add(key); // prevents duplicates within the same message too
+    toAdd.push(p);
   }
+}
+
+if (toAdd.length === 0) {
+  // Everything was a duplicate
+  // Reply with a friendly message
+  const uniqueDupes = Array.from(new Set(dupes.map((d) => normalizeItem(d)))).length;
+  return reply(
+    uniqueDupes === 1
+      ? `Already on the list: ${dupes[0]}`
+      : `All items were already on the list.`
+  );
+}
+
+// Insert only the new ones
+const rows = toAdd.map((text) => ({ text, done: false, added_by: from }));
+const { error } = await supabase.from("grocery_items").insert(rows);
+
+if (error) return reply("Error adding items.");
+
+let msg = `Added: ${toAdd.join(", ")}`;
+if (dupes.length) {
+  // show a clean de-duped list in the message
+  const deduped = Array.from(
+    new Map(dupes.map((d) => [normalizeItem(d), d])).values()
+  );
+  msg += `\nSkipped duplicates: ${deduped.join(", ")}`;
+}
+return reply(msg);
+
 }
