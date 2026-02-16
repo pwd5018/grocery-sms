@@ -20,6 +20,7 @@ async function getOrderedItems() {
   const { data, error } = await supabase
     .from("grocery_items")
     .select("id,text,done,created_at")
+    .order("done", { ascending: true })
     .order("created_at", { ascending: true });
 
   if (error) throw error;
@@ -31,7 +32,6 @@ export async function POST(req: Request) {
   const params = new URLSearchParams(rawBody);
 
   const from = params.get("From") ?? "";
-  console.log("FROM:", from);
   const allowed = new Set([
     "whatsapp:+18148606181",
   ]);
@@ -85,10 +85,14 @@ export async function POST(req: Request) {
 
       const { error } = await supabase
         .from("grocery_items")
-        .update({ done: true })
+        .update({ done: !target.done })
         .eq("id", target.id);
 
-      return reply(error ? "Error updating item." : `Done: ${target.text}`);
+      return reply(
+        error
+          ? "Error updating item."
+          : `${!target.done ? "Done" : "Undone"}: ${target.text}`
+      );
     }
 
     if (lower.startsWith("delete ")) {
