@@ -216,5 +216,6 @@ if (dupes.length) {
   msg += `\nSkipped duplicates: ${deduped.join(", ")}`;
 }
 return reply(msg);
-
-}
+} catch (error) {
+  return reply("Unexpected error.");
+}}
