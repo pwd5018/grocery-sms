@@ -15,6 +15,7 @@ export default async function Home() {
         Shared list (updated by WhatsApp + web)
       </p>
 
+
       <form action={addItem} style={{ display: "flex", gap: 8, marginTop: 16 }}>
         <input
           name="text"
@@ -131,6 +132,22 @@ export default async function Home() {
           </li>
         ))}
       </ul>
+
+            <form action="/api/logout" method="post" style={{ marginTop: 12 }}>
+              <button
+                type="submit"
+                style={{
+                  padding: "8px 10px",
+                  borderRadius: 10,
+                  border: "1px solid #ddd",
+                  background: "white",
+                  color: "black",
+                  cursor: "pointer",
+                }}
+              >
+                Logout
+              </button>
+            </form>
 
       {(!items || items.length === 0) && (
         <p style={{ color: "#555", marginTop: 16 }}>
