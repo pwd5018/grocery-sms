@@ -17,8 +17,12 @@ export async function POST(req: Request) {
   }
 
   if (password !== expected) {
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("next", next);
+    loginUrl.searchParams.set("error", "invalid_password");
+
     return NextResponse.redirect(
-      new URL(`login?next=${encodeURIComponent(next)}`, req.url),
+      loginUrl,
       { status: 303 }
     );
   }

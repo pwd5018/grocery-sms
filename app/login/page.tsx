@@ -1,10 +1,11 @@
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const params = await searchParams;
   const next = params?.next ?? "/";
+  const hasInvalidPasswordError = params?.error === "invalid_password";
 
   return (
     <main
@@ -19,6 +20,21 @@ export default async function LoginPage({
       <p style={{ color: "#555" }}>
         Enter the shared password to view the list.
       </p>
+      {hasInvalidPasswordError ? (
+        <p
+          style={{
+            marginTop: 12,
+            padding: "10px 12px",
+            borderRadius: 10,
+            border: "1px solid #fecaca",
+            background: "#fef2f2",
+            color: "#991b1b",
+          }}
+          role="alert"
+        >
+          Incorrect password. Please try again.
+        </p>
+      ) : null}
 
       <form
         action="/api/login"
