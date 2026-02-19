@@ -6,11 +6,14 @@ export async function POST(req: Request) {
   const password = String(form.get("password") ?? "");
   const next = String(form.get("next") ?? "/");
 
-  const expected = process.env.APP_PASSWORD ?? "";
+  const expected = (process.env.APP_PASSWORD ?? process.env.PASSWORD ?? "").trim();
   const cookieName = process.env.APP_AUTH_COOKIE || "grocery_auth";
 
   if (!expected) {
-    return new NextResponse("Server not configured: APP_PASSWORD missing", { status: 500 });
+    return new NextResponse(
+      "Server not configured: set APP_PASSWORD (or PASSWORD) in your environment.",
+      { status: 500 }
+    );
   }
 
   if (password !== expected) {
